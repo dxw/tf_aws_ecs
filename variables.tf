@@ -144,3 +144,13 @@ variable "user_data" {
 variable "vpc_id" {
   description = "The AWS VPC ID which you want to deploy your instances"
 }
+
+variable "asg_delete_timeout" {
+  description = "AutoScaling Group deletion timeout"
+  default     = "10m"
+}
+
+variable "asg_create_timeout" {
+  description = "AutoScaling Group creation timeout"
+  default     = "10m"
+}
