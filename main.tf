@@ -60,7 +60,7 @@ locals {
 
 resource "aws_autoscaling_group" "ecs" {
   name_prefix          = "asg-${aws_launch_configuration.ecs.name}-"
-  vpc_zone_identifier  = "${var.subnet_id[0]}"
+  vpc_zone_identifier  = "${var.subnet_id}"
   launch_configuration = "${aws_launch_configuration.ecs.name}"
   min_size             = "${var.min_servers}"
   max_size             = "${var.max_servers}"
