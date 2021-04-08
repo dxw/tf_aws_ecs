@@ -6,6 +6,11 @@ data "aws_ami" "ecs_ami" {
     name   = "name"
     values = ["amzn2-ami-ecs-hvm-${var.ami_version}"]
   }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
 }
 
 data "template_file" "user_data" {
