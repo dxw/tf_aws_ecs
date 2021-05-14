@@ -42,7 +42,7 @@ resource "aws_launch_configuration" "ecs" {
   ebs_block_device {
     device_name           = var.ebs_block_device
     volume_size           = var.docker_storage_size
-    volume_type           = "gp2"
+    volume_type           = var.ebs_volume_type
     delete_on_termination = true
   }
 
