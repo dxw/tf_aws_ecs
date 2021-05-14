@@ -35,14 +35,14 @@ resource "aws_launch_configuration" "ecs" {
   instance_type               = var.instance_type
   key_name                    = var.key_name
   iam_instance_profile        = aws_iam_instance_profile.ecs_profile.name
-  security_groups             = concat(list(aws_security_group.ecs.id), var.security_group_ids)
+  security_groups             = concat(tolist([aws_security_group.ecs.id]), var.security_group_ids)
   associate_public_ip_address = var.associate_public_ip_address
   spot_price                  = var.spot_bid_price
 
   ebs_block_device {
     device_name           = var.ebs_block_device
     volume_size           = var.docker_storage_size
-    volume_type           = "gp2"
+    volume_type           = var.ebs_volume_type
     delete_on_termination = true
   }
 

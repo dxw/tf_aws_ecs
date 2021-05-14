@@ -173,3 +173,7 @@ variable "enabled_metrics" {
   type        = list
   default     = []
 }
+
+variable "ebs_volume_type" {
+  default = "gp3"
+}
