@@ -29,28 +29,59 @@ data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
-resource "aws_launch_configuration" "ecs" {
-  name_prefix                 = coalesce(var.name_prefix, "ecs-${var.name}-")
-  image_id                    = var.ami == "" ? format("%s", data.aws_ami.ecs_ami.id) : var.ami   # Workaround until 0.9.6
-  instance_type               = var.instance_type
-  key_name                    = var.key_name
-  iam_instance_profile        = aws_iam_instance_profile.ecs_profile.name
-  security_groups             = concat(tolist([aws_security_group.ecs.id]), var.security_group_ids)
-  associate_public_ip_address = var.associate_public_ip_address
-  spot_price                  = var.spot_bid_price
+resource "aws_launch_template" "ecs_cluster" {
+  name = "ecs-${var.name}"
 
-  ebs_block_device {
-    device_name           = var.ebs_block_device
-    volume_size           = var.docker_storage_size
-    volume_type           = var.ebs_volume_type
-    delete_on_termination = true
+  block_device_mappings {
+    device_name = var.ebs_block_device
+
+    ebs {
+      encrypted             = true
+      volume_size           = var.docker_storage_size
+      volume_type           = var.ebs_volume_type
+      delete_on_termination = true
+    }
   }
 
-  user_data = coalesce(var.user_data, data.template_file.user_data.rendered)
-
-  lifecycle {
-    create_before_destroy = true
+  capacity_reservation_specification {
+    capacity_reservation_preference = "open"
   }
+
+  network_interfaces {
+    associate_public_ip_address = var.associate_public_ip_address
+    security_groups = concat(tolist([aws_security_group.ecs.id]), var.security_group_ids)
+  }
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ecs_profile.name
+  }
+
+  monitoring {
+    enabled = true
+  }
+
+  placement {
+    availability_zone = var.aws_region
+  }
+
+  dynamic "instance_market_options" {
+    for_each = var.spot_bid_price == "" ? [] : [1]
+    content {
+      market_type = "spot"
+      spot_options {
+        instance_interruption_behavior = "terminate"
+        max_price = var.spot_bid_price
+        spot_instance_type = "one-time"
+      }
+    }
+  }
+
+  disable_api_termination = false
+  ebs_optimized = true
+  image_id = data.aws_ami.ecs_ami.id
+  instance_initiated_shutdown_behavior = "stop"
+  instance_type = var.instance_type
+  user_data = base64encode(coalesce(var.user_data, data.template_file.user_data.rendered))
 }
 
 locals {
@@ -75,6 +106,14 @@ resource "aws_autoscaling_group" "ecs" {
   enabled_metrics      = var.enabled_metrics
 
   tags = local.ecs_asg_tags
+
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 100
+    }
+    triggers = ["tag"]
+  }
 
   lifecycle {
     create_before_destroy = true
