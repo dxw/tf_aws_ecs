@@ -29,7 +29,7 @@ data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
-resource "aws_launch_template" "ecs_cluster" {
+resource "aws_launch_template" "ecs" {
   name = "ecs-${var.name}"
 
   block_device_mappings {
@@ -58,10 +58,6 @@ resource "aws_launch_template" "ecs_cluster" {
 
   monitoring {
     enabled = true
-  }
-
-  placement {
-    availability_zone = var.aws_region
   }
 
   dynamic "instance_market_options" {
@@ -95,9 +91,14 @@ locals {
 }
 
 resource "aws_autoscaling_group" "ecs" {
-  name_prefix          = "asg-${aws_launch_configuration.ecs.name}-"
+  name_prefix          = "asg-${aws_launch_template.ecs.name}-"
   vpc_zone_identifier  = var.subnet_id
-  launch_configuration = aws_launch_configuration.ecs.name
+
+  launch_template {
+    id      = aws_launch_template.ecs.id
+    version = aws_launch_template.ecs.latest_version
+  }
+
   min_size             = var.min_servers
   max_size             = var.max_servers
   desired_capacity     = var.servers
