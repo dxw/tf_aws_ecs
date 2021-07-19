@@ -19,6 +19,7 @@ data "template_file" "user_data" {
   vars = {
     additional_user_data_script = var.additional_user_data_script
     cluster_name                = aws_ecs_cluster.cluster.name
+    docker_storage_device_name  = var.ebs_block_device
     docker_storage_size         = var.docker_storage_size
     dockerhub_token             = var.dockerhub_token
     dockerhub_email             = var.dockerhub_email
