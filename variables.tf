@@ -177,3 +177,9 @@ variable "enabled_metrics" {
 variable "ebs_volume_type" {
   default = "gp3"
 }
+
+variable "max_instance_lifetime" {
+  description = "Max instance lifetime"
+  type        = string
+  default     = "0"
+}

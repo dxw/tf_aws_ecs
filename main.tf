@@ -100,12 +100,13 @@ resource "aws_autoscaling_group" "ecs" {
     version = aws_launch_template.ecs.latest_version
   }
 
-  min_size             = var.min_servers
-  max_size             = var.max_servers
-  desired_capacity     = var.servers
-  termination_policies = ["OldestLaunchConfiguration", "ClosestToNextInstanceHour", "Default"]
-  load_balancers       = var.load_balancers
-  enabled_metrics      = var.enabled_metrics
+  min_size              = var.min_servers
+  max_size              = var.max_servers
+  desired_capacity      = var.servers
+  termination_policies  = ["OldestLaunchConfiguration", "ClosestToNextInstanceHour", "Default"]
+  max_instance_lifetime = var.max_instance_lifetime
+  load_balancers        = var.load_balancers
+  enabled_metrics       = var.enabled_metrics
 
   tags = local.ecs_asg_tags
 
