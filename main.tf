@@ -34,6 +34,15 @@ resource "aws_launch_template" "ecs" {
   name = "ecs-${var.name}"
 
   block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      encrypted             = true
+      delete_on_termination = true
+    }
+  }
+
+  block_device_mappings {
     device_name = var.ebs_block_device
 
     ebs {
@@ -97,7 +106,7 @@ resource "aws_autoscaling_group" "ecs" {
 
   launch_template {
     id      = aws_launch_template.ecs.id
-    version = aws_launch_template.ecs.latest_version
+    version = "$Latest"
   }
 
   min_size              = var.min_servers
