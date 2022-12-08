@@ -76,7 +76,7 @@ resource "aws_iam_policy" "custom_ecs_policy" {
 
 resource "aws_iam_policy_attachment" "attach_ecs" {
   name       = "ecs-attachment"
-  roles      = [ aws_iam_role.ecs_role.name ]
+  roles      = [aws_iam_role.ecs_role.name]
   policy_arn = element(concat(aws_iam_policy.ecs_policy.*.arn, aws_iam_policy.custom_ecs_policy.*.arn), 0)
 }
 

@@ -6,7 +6,7 @@ A terraform module to provide ECS clusters in AWS.
 [![CircleCI](https://circleci.com/gh/terraform-community-modules/tf_aws_ecs.svg?style=svg)](https://circleci.com/gh/terraform-community-modules/tf_aws_ecs)
 
 
-This Module currently supports Terraform 0.10.x, but does not require it. If you use tfenv, this module contains a `.terraform-version` file which matches the version of Terraform we currently use to test with.
+This Module currently supports Terraform >=0.10.x, but does not require it. If you use tfenv, this module contains a `.terraform-version` file which matches the version of Terraform we currently use to test with.
 
 
 Module Input Variables
@@ -60,7 +60,7 @@ extra_tags = [
 - `registrator_memory_reservation` - The soft limit (in MiB) of memory to reserve for the container, defaults 20
 - `enable_agents` - Enable Consul Agent and Registrator tasks on each ECS Instance. Defaults to false
 - `spot_bid_price` - Use spot instances and request this bid price.  Note that with this option you risk your instances
-                     shutting down if the market price rises above your bid price. 
+                     shutting down if the market price rises above your bid price.
 - `enabled_metrics` - A list of metrics to collect.
 
 Usage
@@ -81,7 +81,7 @@ module "ecs-cluster" {
 
 In order to start the Consul/Registrator task in ECS, you'll need to pass in a consul config into the `additional_user_data_script` script parameter.  For example, you might pass something like this:
 
-Please note, this module will try to mount `/etc/consul/` into `/consul/config` in the container and assumes that the consul config lives under `/etc/consul` on the docker host.  
+Please note, this module will try to mount `/etc/consul/` into `/consul/config` in the container and assumes that the consul config lives under `/etc/consul` on the docker host.
 
 ```Shell
 /bin/mkdir -p /etc/consul
@@ -102,24 +102,20 @@ CONSUL
 
 ```hcl
 
-data "template_file" "ecs_consul_agent_json" {
-  template = "${file("ecs_consul_agent.json.sh")}"
-
-  vars {
-    datacenter = "infra-services"
-  }
-}
-
 module "ecs-cluster" {
   source                      = "github.com/terraform-community-modules/tf_aws_ecs"
   name                        = "infra-services"
   servers                     = 1
   subnet_id                   = ["subnet-6e101446"]
   vpc_id                      = "vpc-99e73dfc"
-  additional_user_data_script = "${data.template_file.ecs_consul_agent_json.rendered}"
+  additional_user_data_script = templatefile(
+    "${file("ecs_consul_agent.json.sh")}",
+    {
+      datacenter = "infra-services"
+    }
+  )
   enable_agents               = true
 }
-
 
 ```
 
@@ -129,7 +125,7 @@ Outputs
 
 - `cluster_id` - _(String)_ ECS Cluster id for use in ECS task and service definitions.
 - `cluster_name` - (String) ECS Cluster name that can be used for CloudWatch app autoscaling policy resource_id.
-- `autoscaling_group` _(Map)_ A map with keys `id`, `name`, and `arn` of the `aws_autoscaling_group` created.  
+- `autoscaling_group` _(Map)_ A map with keys `id`, `name`, and `arn` of the `aws_autoscaling_group` created.
 - `iam_role` _(Map)_ A map with keys `arn` and `name` of the `iam_role` created.
 - `security_group` _(Map)_ A map with keys `id`, `name`, and `arn` of the `aws_security_group` created.
 
