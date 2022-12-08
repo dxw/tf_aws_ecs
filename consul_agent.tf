@@ -1,26 +1,21 @@
-data "template_file" "consul" {
-  template = file("${path.module}/templates/consul.json")
-
-  vars = {
-    env                            = aws_ecs_cluster.cluster.name
-    image                          = var.consul_image
-    registrator_image              = var.registrator_image
-    consul_memory_reservation      = var.consul_memory_reservation
-    registrator_memory_reservation = var.registrator_memory_reservation
-    awslogs_group                  = "consul-agent-${aws_ecs_cluster.cluster.name}"
-    awslogs_stream_prefix          = "consul-agent-${aws_ecs_cluster.cluster.name}"
-    awslogs_region                 = var.region
-  }
-}
-
-# End Data block
-
 resource "aws_ecs_task_definition" "consul" {
-  count                 = var.enable_agents ? 1 : 0
-  family                = "consul-agent-${aws_ecs_cluster.cluster.name}"
-  container_definitions = data.template_file.consul.rendered
-  network_mode          = "host"
-  task_role_arn         = aws_iam_role.consul_task[0].arn
+  count  = var.enable_agents ? 1 : 0
+  family = "consul-agent-${aws_ecs_cluster.cluster.name}"
+  container_definitions = templatefile(
+    "${path.module}/templates/consul.json",
+    {
+      env                            = aws_ecs_cluster.cluster.name
+      image                          = var.consul_image
+      registrator_image              = var.registrator_image
+      consul_memory_reservation      = var.consul_memory_reservation
+      registrator_memory_reservation = var.registrator_memory_reservation
+      awslogs_group                  = "consul-agent-${aws_ecs_cluster.cluster.name}"
+      awslogs_stream_prefix          = "consul-agent-${aws_ecs_cluster.cluster.name}"
+      awslogs_region                 = var.region
+    }
+  )
+  network_mode  = "host"
+  task_role_arn = aws_iam_role.consul_task[0].arn
 
   volume {
     name      = "consul-config-dir"

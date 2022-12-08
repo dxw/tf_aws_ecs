@@ -13,19 +13,6 @@ data "aws_ami" "ecs_ami" {
   }
 }
 
-data "template_file" "user_data" {
-  template = file("${path.module}/templates/user_data.tpl")
-
-  vars = {
-    additional_user_data_script = var.additional_user_data_script
-    cluster_name                = aws_ecs_cluster.cluster.name
-    docker_storage_device_name  = var.ebs_block_device
-    docker_storage_size         = var.docker_storage_size
-    dockerhub_token             = var.dockerhub_token
-    dockerhub_email             = var.dockerhub_email
-  }
-}
-
 data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
@@ -60,7 +47,7 @@ resource "aws_launch_template" "ecs" {
 
   network_interfaces {
     associate_public_ip_address = var.associate_public_ip_address
-    security_groups = concat(tolist([aws_security_group.ecs.id]), var.security_group_ids)
+    security_groups             = concat(tolist([aws_security_group.ecs.id]), var.security_group_ids)
   }
 
   iam_instance_profile {
@@ -77,18 +64,28 @@ resource "aws_launch_template" "ecs" {
       market_type = "spot"
       spot_options {
         instance_interruption_behavior = "terminate"
-        max_price = var.spot_bid_price
-        spot_instance_type = "one-time"
+        max_price                      = var.spot_bid_price
+        spot_instance_type             = "one-time"
       }
     }
   }
 
-  disable_api_termination = false
-  ebs_optimized = true
-  image_id = data.aws_ami.ecs_ami.id
+  disable_api_termination              = false
+  ebs_optimized                        = true
+  image_id                             = data.aws_ami.ecs_ami.id
   instance_initiated_shutdown_behavior = "stop"
-  instance_type = var.instance_type
-  user_data = base64encode(coalesce(var.user_data, data.template_file.user_data.rendered))
+  instance_type                        = var.instance_type
+  user_data = base64encode(coalesce(var.user_data, templatefile(
+    "${path.module}/templates/user_data.tpl",
+    {
+      additional_user_data_script = var.additional_user_data_script
+      cluster_name                = aws_ecs_cluster.cluster.name
+      docker_storage_device_name  = var.ebs_block_device
+      docker_storage_size         = var.docker_storage_size
+      dockerhub_token             = var.dockerhub_token
+      dockerhub_email             = var.dockerhub_email
+    }
+  )))
 }
 
 locals {
@@ -102,8 +99,8 @@ locals {
 }
 
 resource "aws_autoscaling_group" "ecs" {
-  name_prefix          = "asg-${aws_launch_template.ecs.name}-"
-  vpc_zone_identifier  = var.subnet_id
+  name_prefix         = "asg-${aws_launch_template.ecs.name}-"
+  vpc_zone_identifier = var.subnet_id
 
   launch_template {
     id      = aws_launch_template.ecs.id
