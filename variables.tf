@@ -185,3 +185,24 @@ variable "max_instance_lifetime" {
   type        = string
   default     = "0"
 }
+
+variable "autoscaling_time_based_max" {
+  description = "List of cron expressions to scale the ECS cluster to the configured max size"
+  type        = list(string)
+}
+
+variable "autoscaling_time_based_min" {
+  description = "List of cron expressions to scale the ECS cluster to the configured min size"
+  type        = list(string)
+}
+
+variable "autoscaling_time_based_custom" {
+  description = "List of objects with min/max sizes and cron expressions to scale the ECS cluster. Min size will be used as desired."
+  type = list(
+    object({
+      cron = string
+      min  = number
+      max  = number
+    })
+  )
+}
