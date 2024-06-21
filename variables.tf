@@ -15,11 +15,13 @@ variable "allowed_egress_cidr_blocks" {
 }
 
 variable "ami" {
-  default = ""
+  description = "Name of a specific AMI to use"
+  default     = ""
 }
 
 variable "ami_version" {
-  default = "*"
+  description = "Specify a version of the AMI"
+  default     = "*"
 }
 
 variable "associate_public_ip_address" {
